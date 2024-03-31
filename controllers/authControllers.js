@@ -58,9 +58,18 @@ const signout = async (req, res) => {
   res.status(204).json({ message: "Signout success" });
 };
 
+const updateSub = async (req, res) => {
+  const { subscription } = req.body;
+  const { _id } = req.user;
+  const result = await authServices.updateUser({ _id }, { subscription });
+
+  res.json({ email: result.email, subscription: result.subscription });
+};
+
 export default {
   signup: ctrlWrapper(signup),
   signin: ctrlWrapper(signin),
   getCurrent: ctrlWrapper(getCurrent),
   signout: ctrlWrapper(signout),
+  updateSub: ctrlWrapper(updateSub),
 };

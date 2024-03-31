@@ -1,7 +1,11 @@
 import express from "express";
 
 import authControllers from "../controllers/authControllers.js";
-import { userSignupSchema, userLoginSchema } from "../schemas/userSchemas.js";
+import {
+  userSignupSchema,
+  userLoginSchema,
+  userUpdateSubSchema,
+} from "../schemas/userSchemas.js";
 import validateBody from "../helpers/validateBody.js";
 
 import authenticate from "../middlewars/authenticate.js";
@@ -23,5 +27,12 @@ authRouter.post(
 authRouter.get("/current", authenticate, authControllers.getCurrent);
 
 authRouter.post("/logout", authenticate, authControllers.signout);
+
+authRouter.patch(
+  "/",
+  authenticate,
+  validateBody(userUpdateSubSchema),
+  authControllers.updateSub
+);
 
 export default authRouter;
