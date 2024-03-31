@@ -8,13 +8,18 @@ import {
 } from "../schemas/contactsSchemas.js";
 
 const getAllContacts = async (req, res) => {
-  const result = await contactsService.listContacts();
-  res.json(result);
+  const { _id: owner } = req.user;
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+  const result = await contactsService.listContacts({ owner }, { skip, limit });
+  const total = await contactsService.countContacts({ owner });
+  res.json({ result, total });
 };
 
 const getOneContact = async (req, res) => {
   const { id } = req.params;
-  const result = await contactsService.getContactById(id);
+  const { _id: owner } = req.user;
+  const result = await contactsService.getContactByFilter({ owner, _id: id });
   if (!result) {
     throw HttpError(404);
   }
@@ -22,8 +27,9 @@ const getOneContact = async (req, res) => {
 };
 
 const deleteContact = async (req, res) => {
+  const { _id: owner } = req.user;
   const { id } = req.params;
-  const result = await contactsService.removeContact(id);
+  const result = await contactsService.removeContactFilter({ owner, _id: id });
   if (!result) {
     throw HttpError(404);
   }
@@ -35,7 +41,8 @@ const createContact = async (req, res) => {
   if (error) {
     throw HttpError(400, error.message);
   }
-  const result = await contactsService.addContact(req.body);
+  const { _id: owner } = req.user;
+  const result = await contactsService.addContact({ ...req.body, owner });
   res.status(201).json(result);
 };
 
@@ -45,9 +52,12 @@ const updateContact = async (req, res) => {
   if (error) {
     throw HttpError(400, error.message);
   }
-
+  const { _id: owner } = req.user;
   const { id } = req.params;
-  const result = await contactsService.updateContact(id, req.body);
+  const result = await contactsService.updateContactFilter(
+    { owner, _id: id },
+    req.body
+  );
   if (!result) {
     throw HttpError(404);
   }
@@ -59,9 +69,12 @@ const updateStatusContact = async (req, res) => {
   if (error) {
     throw HttpError(400, error.message);
   }
-
+  const { _id: owner } = req.user;
   const { id } = req.params;
-  const result = await contactsService.updateContact(id, req.body);
+  const result = await contactsService.updateContactFilter(
+    { owner, _id: id },
+    req.body
+  );
   if (!result) {
     throw HttpError(404);
   }
