@@ -1,9 +1,9 @@
 import express from "express";
 import contactsController from "../controllers/contactsControllers.js";
 import isValidId from "../middlewars/isValidId.js";
-
+import authenticate from "../middlewars/authenticate.js";
 const contactsRouter = express.Router();
-
+contactsRouter.use(authenticate);
 contactsRouter.get("/", contactsController.getAllContacts);
 
 contactsRouter.get("/:id", isValidId, contactsController.getOneContact);
