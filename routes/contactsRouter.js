@@ -11,7 +11,11 @@ contactsRouter.get("/:id", isValidId, contactsController.getOneContact);
 
 contactsRouter.delete("/:id", isValidId, contactsController.deleteContact);
 
-contactsRouter.post("/", contactsController.createContact);
+contactsRouter.post(
+  "/",
+
+  contactsController.createContact
+);
 
 contactsRouter.put("/:id", isValidId, contactsController.updateContact);
 
