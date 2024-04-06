@@ -56,8 +56,14 @@ const createContact = async (req, res) => {
   if (error) {
     throw HttpError(400, error.message);
   }
+
   const { _id: owner } = req.user;
-  const result = await contactsService.addContact({ ...req.body, owner });
+
+  const result = await contactsService.addContact({
+    ...req.body,
+    avatar,
+    owner,
+  });
   res.status(201).json(result);
 };
 
