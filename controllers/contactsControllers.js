@@ -7,12 +7,27 @@ import {
   updateStatusSchema,
 } from "../schemas/contactsSchemas.js";
 
-const getAllContacts = async (req, res) => {
+const getAllContacts = async (req, res, next) => {
   const { _id: owner } = req.user;
   const { page = 1, limit = 10 } = req.query;
+  const { favorite } = req.query;
   const skip = (page - 1) * limit;
-  const result = await contactsService.listContacts({ owner }, { skip, limit });
-  const total = await contactsService.countContacts({ owner });
+  if (!favorite) {
+    const total = await contactsService.countContacts({ owner });
+    const result = await contactsService.listContacts(
+      { owner },
+      { skip, limit }
+    );
+
+    return res.json({ result, total });
+  }
+
+  const total = await contactsService.countContacts({ owner, favorite });
+  const result = await contactsService.listContacts(
+    { owner, favorite },
+    { skip, limit }
+  );
+
   res.json({ result, total });
 };
 
