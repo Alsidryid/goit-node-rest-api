@@ -76,6 +76,9 @@ const updateSub = async (req, res) => {
 };
 
 const updateAvatar = async (req, res) => {
+  if (!req.file) {
+    throw HttpError(400, "Please send the file");
+  }
   const { path: oldPath, filename } = req.file;
   const { _id, email } = req.user;
 
@@ -83,12 +86,11 @@ const updateAvatar = async (req, res) => {
     if (err) throw err;
     lenna.resize(250, 250).quality(60).greyscale().write(newPath);
   });
-
-  const newPath = path.join(posterPath, `${email}_${filename}`);
-
+  const newFilename = `${email}_${filename}`;
+  const newPath = path.join(posterPath, newFilename);
   await fs.rename(oldPath, newPath);
-
-  const result = await authServices.updateUser({ _id }, { avatarUrl: newPath });
+  const avatar = path.join("avatars", newFilename);
+  const result = await authServices.updateUser({ _id }, { avatarUrl: avatar });
 
   res.json({ email: result.email, avatarUrl: result.avatarUrl });
 };
