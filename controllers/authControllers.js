@@ -8,13 +8,16 @@ import fs from "fs/promises";
 import path from "path";
 import Jimp from "jimp";
 import gravatar from "gravatar";
+import { nanoid } from "nanoid";
+import sendEmail from "../helpers/sendEmail.js";
 
 const posterPath = path.resolve("public", "avatars");
 
-const { JWT_SECRET } = process.env;
+const { JWT_SECRET, BASE_URL } = process.env;
 
 const signup = async (req, res) => {
   const { email, password } = req.body;
+  const verificationToken = nanoid();
   const user = await authServices.findUser({ email });
   if (user) {
     throw HttpError(409, "Email in use");
@@ -26,11 +29,65 @@ const signup = async (req, res) => {
     ...req.body,
     avatarUrl,
     password: hashPassword,
+    verificationToken,
   });
+
+  const verifyEmail = {
+    to: email,
+    subject: "verify email",
+    html: `<h1>Hello ${email}</h1><a target = "_blank" href="${BASE_URL}/users/register/verify/${verificationToken}">Click for verify email<a/>`,
+  };
+
+  await sendEmail(verifyEmail);
+
   res.status(201).json({
     email: newUser.email,
     subscription: newUser.subscription,
     avatarUrl: newUser.avatarUrl,
+  });
+};
+
+const verify = async (req, res) => {
+  const { verificationToken } = req.params;
+
+  const user = await authServices.findUser({ verificationToken });
+  console.log(user);
+  if (!user) {
+    throw HttpError(404, "Email not found or already verified");
+  }
+
+  await authServices.updateUser(
+    { _id: user._id },
+    { verify: true, verificationToken: "null" }
+  );
+  res.json({
+    message: "Verification successful",
+  });
+};
+
+const resendVerify = async (req, res) => {
+  const { email } = req.body;
+  const user = await authServices.findUser({ email });
+  if (!email) {
+    throw HttpError(400, "missing required field email");
+  }
+  if (!user) {
+    throw HttpError(404, "Email not found");
+  }
+  if (user.verify) {
+    throw HttpError(400, "Verification has already been passed");
+  }
+
+  const verifyEmail = {
+    to: email,
+    subject: "verify email",
+    html: `<h1>Hello ${email}</h1><a target = "_blank" href="${BASE_URL}/users/register/verify/${user.verificationToken}">Click for verify email<a/>`,
+  };
+
+  await sendEmail(verifyEmail);
+
+  res.json({
+    message: "verify email send again",
   });
 };
 
@@ -39,6 +96,9 @@ const signin = async (req, res) => {
   const user = await authServices.findUser({ email });
   if (!user) {
     throw HttpError(401, "Email or passwor invalid");
+  }
+  if (!user.verify) {
+    throw HttpError(401, "Email not verified");
   }
   const passworCompare = await bcrypt.compare(password, user.password);
   if (!passworCompare) {
@@ -101,4 +161,6 @@ export default {
   signout: ctrlWrapper(signout),
   updateSub: ctrlWrapper(updateSub),
   updateAvatar: ctrlWrapper(updateAvatar),
+  verify: ctrlWrapper(verify),
+  resendVerify: ctrlWrapper(resendVerify),
 };

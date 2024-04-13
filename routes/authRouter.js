@@ -6,6 +6,7 @@ import {
   userSignupSchema,
   userLoginSchema,
   userUpdateSubSchema,
+  userEmailSchema,
 } from "../schemas/userSchemas.js";
 import validateBody from "../helpers/validateBody.js";
 
@@ -42,5 +43,13 @@ authRouter.patch(
   upload.single("avatar"),
   authControllers.updateAvatar
 );
+
+authRouter.post(
+  "/verify",
+  validateBody(userEmailSchema),
+  authControllers.resendVerify
+);
+
+authRouter.get("/register/verify/:verificationToken", authControllers.verify);
 
 export default authRouter;
